@@ -43,6 +43,15 @@ run_cmd() {
     fi
 }
 
+# append_to_file: append stdin to a file, or just report it in dry-run mode
+append_to_file() {
+    if $DRY_RUN; then
+        echo -e "${YELLOW}[DRY-RUN]${NC} append to $1"
+    else
+        cat >> "$1"
+    fi
+}
+
 # ─── Parse Arguments ────────────────────────────────────────────────
 SHELL_CHOICE=""
 for arg in "$@"; do
@@ -390,10 +399,11 @@ install_shell_macos() {
             success "Fish already installed"
         fi
 
-        FISH_PATH="$(which fish)"
+        # Fish is not installed yet in dry-run mode
+        FISH_PATH="$(command -v fish || echo fish)"
         if ! grep -qxF "$FISH_PATH" /etc/shells 2>/dev/null; then
             info "Adding Fish to /etc/shells (may need sudo)..."
-            echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
+            run_cmd sudo sh -c "echo '$FISH_PATH' >> /etc/shells"
         fi
 
         if [[ "$SHELL" != "$FISH_PATH" ]]; then
@@ -443,10 +453,11 @@ install_shell_linux() {
             success "Fish already installed"
         fi
 
-        FISH_PATH="$(which fish)"
+        # Fish is not installed yet in dry-run mode
+        FISH_PATH="$(command -v fish || echo fish)"
         if ! grep -qxF "$FISH_PATH" /etc/shells 2>/dev/null; then
             info "Adding Fish to /etc/shells..."
-            echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
+            run_cmd sudo sh -c "echo '$FISH_PATH' >> /etc/shells"
         fi
 
         if [[ "$SHELL" != "$FISH_PATH" ]]; then
@@ -498,7 +509,8 @@ install_shell_linux() {
             success "zsh-syntax-highlighting installed"
         fi
 
-        ZSH_PATH="$(which zsh)"
+        # Zsh is not installed yet in dry-run mode
+        ZSH_PATH="$(command -v zsh || echo zsh)"
         if [[ "$SHELL" != "$ZSH_PATH" ]]; then
             info "Setting Zsh as default shell..."
             run_cmd chsh -s "$ZSH_PATH"
@@ -853,10 +865,10 @@ if [[ "$SHELL_CHOICE" == "fish" ]]; then
         # For Linux: use modified config without Homebrew paths
         run_cmd cp "$CONFIGS_DIR/config.fish" "$FISH_CONFIG_DIR/config.fish"
         # Patch: replace Homebrew paths with Linux equivalents
-        sed -i 's|/opt/homebrew/bin/starship|starship|g' "$FISH_CONFIG_DIR/config.fish"
-        sed -i 's|fish_add_path /opt/homebrew/bin|# PATH: system paths are used on Linux|g' "$FISH_CONFIG_DIR/config.fish"
+        run_cmd sed -i 's|/opt/homebrew/bin/starship|starship|g' "$FISH_CONFIG_DIR/config.fish"
+        run_cmd sed -i 's|fish_add_path /opt/homebrew/bin|# PATH: system paths are used on Linux|g' "$FISH_CONFIG_DIR/config.fish"
         # Fix pnpm path for Linux
-        sed -i 's|\$HOME/Library/pnpm|\$HOME/.local/share/pnpm|g' "$FISH_CONFIG_DIR/config.fish"
+        run_cmd sed -i 's|\$HOME/Library/pnpm|\$HOME/.local/share/pnpm|g' "$FISH_CONFIG_DIR/config.fish"
     fi
     success "Fish config deployed"
 
@@ -864,16 +876,18 @@ if [[ "$SHELL_CHOICE" == "fish" ]]; then
     # since the upstream zoxide installer and the bat/fd symlinks live there
     if [[ "$OS" == "debian" || "$OS" == "wsl" ]]; then
         if ! grep -qF '.local/bin' "$FISH_CONFIG_DIR/config.fish" 2>/dev/null; then
-            echo '' >> "$FISH_CONFIG_DIR/config.fish"
-            echo '# Local bin (Linux)' >> "$FISH_CONFIG_DIR/config.fish"
-            echo 'fish_add_path $HOME/.local/bin' >> "$FISH_CONFIG_DIR/config.fish"
+            append_to_file "$FISH_CONFIG_DIR/config.fish" << 'LOCALBINEOF'
+
+# Local bin (Linux)
+fish_add_path $HOME/.local/bin
+LOCALBINEOF
         fi
     fi
 
     # Fish abbreviations (written to config.fish for Fish 3.x & 4.x compat)
     if ! grep -qF 'abbr -a ls' "$FISH_CONFIG_DIR/config.fish" 2>/dev/null; then
         info "Adding Fish abbreviations to config.fish..."
-        cat >> "$FISH_CONFIG_DIR/config.fish" << 'ABBREOF'
+        append_to_file "$FISH_CONFIG_DIR/config.fish" << 'ABBREOF'
 
 # Abbreviations (compatible with Fish 3.x and 4.x)
 if status is-interactive
@@ -898,7 +912,7 @@ ABBREOF
     # Zoxide + fzf init for fish
     if ! grep -qF "zoxide" "$FISH_CONFIG_DIR/config.fish" 2>/dev/null; then
         info "Adding zoxide + fzf init to fish config..."
-        cat >> "$FISH_CONFIG_DIR/config.fish" << 'FISHEOF'
+        append_to_file "$FISH_CONFIG_DIR/config.fish" << 'FISHEOF'
 
 # zoxide
 if command -q zoxide
@@ -937,19 +951,19 @@ else
         run_cmd cp "$CONFIGS_DIR/.zshrc" "$HOME/.zshrc"
 
         # Patch Homebrew paths → Linux paths
-        sed -i 's|export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:\$PATH"|# PATH — system paths on Linux\nexport PATH="$HOME/.local/bin:$PATH"|' "$HOME/.zshrc"
+        run_cmd sed -i 's|export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:\$PATH"|# PATH — system paths on Linux\nexport PATH="$HOME/.local/bin:$PATH"|' "$HOME/.zshrc"
 
         # Patch zsh plugin source paths
-        sed -i 's|/opt/homebrew/share/zsh-syntax-highlighting/|/usr/share/zsh-syntax-highlighting/|g' "$HOME/.zshrc"
-        sed -i 's|/opt/homebrew/share/zsh-autosuggestions/|/usr/share/zsh-autosuggestions/|g' "$HOME/.zshrc"
-        sed -i 's|/opt/homebrew/share/zsh-completions|/usr/share/zsh-completions|g' "$HOME/.zshrc"
+        run_cmd sed -i 's|/opt/homebrew/share/zsh-syntax-highlighting/|/usr/share/zsh-syntax-highlighting/|g' "$HOME/.zshrc"
+        run_cmd sed -i 's|/opt/homebrew/share/zsh-autosuggestions/|/usr/share/zsh-autosuggestions/|g' "$HOME/.zshrc"
+        run_cmd sed -i 's|/opt/homebrew/share/zsh-completions|/usr/share/zsh-completions|g' "$HOME/.zshrc"
 
         # Patch pnpm path for Linux
-        sed -i 's|\$HOME/Library/pnpm|\$HOME/.local/share/pnpm|g' "$HOME/.zshrc"
+        run_cmd sed -i 's|\$HOME/Library/pnpm|\$HOME/.local/share/pnpm|g' "$HOME/.zshrc"
 
         # Add fnm path for Linux (installed to ~/.local/share/fnm)
         if ! grep -qF '.local/share/fnm' "$HOME/.zshrc" 2>/dev/null; then
-            sed -i '/# ─── fnm/i # fnm binary path (Linux)\nexport PATH="$HOME/.local/share/fnm:$PATH"\n' "$HOME/.zshrc"
+            run_cmd sed -i '/# ─── fnm/i # fnm binary path (Linux)\nexport PATH="$HOME/.local/share/fnm:$PATH"\n' "$HOME/.zshrc"
         fi
     fi
     success "Zsh config deployed"
