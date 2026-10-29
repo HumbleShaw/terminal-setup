@@ -90,15 +90,31 @@ detect_os() {
 
 OS="$(detect_os)"
 
+# ─── CPU Architecture Detection ─────────────────────────────────────
+# Normalized to the names used by bin/linux-<arch>/ and GitHub release assets.
+# Possible values: x86_64, aarch64, or raw `uname -m` output for anything else
+detect_arch() {
+    local machine
+    machine="$(uname -m)"
+
+    case "$machine" in
+        x86_64|amd64)  echo "x86_64" ;;
+        aarch64|arm64) echo "aarch64" ;;
+        *)             echo "$machine" ;;
+    esac
+}
+
+ARCH="$(detect_arch)"
+
 case "$OS" in
     macos)
-        info "Detected ${BOLD}macOS${NC}"
+        info "Detected ${BOLD}macOS${NC} ($ARCH)"
         ;;
     debian)
-        info "Detected ${BOLD}Debian/Ubuntu Linux${NC}"
+        info "Detected ${BOLD}Debian/Ubuntu Linux${NC} ($ARCH)"
         ;;
     wsl)
-        info "Detected ${BOLD}Windows WSL${NC} (Debian/Ubuntu layer)"
+        info "Detected ${BOLD}Windows WSL${NC} (Debian/Ubuntu layer, $ARCH)"
         ;;
     windows-native)
         error "Native Windows (MINGW/MSYS/Cygwin) is not supported.\n  Please install WSL: https://learn.microsoft.com/en-us/windows/wsl/install\n  Then run this script inside WSL."
@@ -189,6 +205,44 @@ cask_install() {
 # Check if a command exists
 has_cmd() {
     command -v "$1" &>/dev/null
+}
+
+# Install a prebuilt binary from bin/linux-<arch>/ (Linux only).
+# Returns non-zero when there is no binary for this CPU architecture or it
+# cannot run here (e.g. needs a newer glibc), so callers can fall back.
+install_bundled_bin() {
+    local name="$1"
+    local src="$SCRIPT_DIR/bin/linux-$ARCH/$name"
+
+    [[ -f "$src" ]] || return 1
+    if ! "$src" --version &>/dev/null; then
+        warn "Bundled $name binary for $ARCH does not run on this system"
+        return 1
+    fi
+    run_cmd sudo cp "$src" "/usr/local/bin/$name"
+    run_cmd sudo chmod +x "/usr/local/bin/$name"
+    success "$name installed from bundled binary ($ARCH)"
+}
+
+# Download a .tar.gz release asset and install the binary named $1 from it
+install_release_tarball() {
+    local name="$1"
+    local url="$2"
+
+    if $DRY_RUN; then
+        echo -e "${YELLOW}[DRY-RUN]${NC} curl -fsSL $url | tar xz && sudo cp $name /usr/local/bin/$name"
+        return 0
+    fi
+
+    local tmp status=0
+    tmp="$(mktemp -d)"
+    curl -fsSL "$url" -o "$tmp/release.tar.gz" \
+        && tar xzf "$tmp/release.tar.gz" -C "$tmp" \
+        && sudo cp "$tmp/$name" "/usr/local/bin/$name" \
+        && sudo chmod +x "/usr/local/bin/$name" \
+        || status=$?
+    rm -rf "$tmp"
+    return "$status"
 }
 
 # ─── Step 1: Package Manager ────────────────────────────────────────
@@ -542,18 +596,6 @@ install_cli_tools_linux() {
         success "fd symlink created"
     fi
 
-    # Helper: install bundled binary from bin/linux-x86_64/
-    install_bundled_bin() {
-        local name="$1"
-        if [[ -f "$SCRIPT_DIR/bin/linux-x86_64/$name" ]]; then
-            run_cmd sudo cp "$SCRIPT_DIR/bin/linux-x86_64/$name" "/usr/local/bin/$name"
-            run_cmd sudo chmod +x "/usr/local/bin/$name"
-            success "$name installed from bundled binary"
-            return 0
-        fi
-        return 1
-    }
-
     # eza — try apt first, then bundled binary
     if has_cmd eza; then
         success "eza already installed"
@@ -562,7 +604,7 @@ install_cli_tools_linux() {
         if run_cmd sudo apt-get install -y eza 2>/dev/null; then
             success "eza installed via apt"
         else
-            install_bundled_bin eza || warn "Could not install eza — skipping"
+            install_bundled_bin eza || warn "Could not install eza for $ARCH — skipping"
         fi
     fi
 
@@ -574,7 +616,7 @@ install_cli_tools_linux() {
         if run_cmd sudo apt-get install -y tealdeer 2>/dev/null; then
             success "tldr installed via apt"
         else
-            install_bundled_bin tldr || warn "Could not install tldr — skipping"
+            install_bundled_bin tldr || warn "Could not install tldr for $ARCH — skipping"
         fi
     fi
 
@@ -586,7 +628,7 @@ install_cli_tools_linux() {
         if run_cmd sudo apt-get install -y git-delta 2>/dev/null; then
             success "git-delta installed via apt"
         else
-            install_bundled_bin delta || warn "Could not install git-delta — skipping"
+            install_bundled_bin delta || warn "Could not install git-delta for $ARCH — skipping"
         fi
     fi
 
@@ -598,7 +640,7 @@ install_cli_tools_linux() {
         if run_cmd sudo apt-get install -y lazygit 2>/dev/null; then
             success "lazygit installed via apt"
         else
-            install_bundled_bin lazygit || warn "Could not install lazygit — skipping"
+            install_bundled_bin lazygit || warn "Could not install lazygit for $ARCH — skipping"
         fi
     fi
 
@@ -629,30 +671,12 @@ else
             ;;
         debian|wsl)
             info "Installing Starship..."
-            if [[ -f "$SCRIPT_DIR/bin/linux-x86_64/starship" ]]; then
-                # Use bundled binary (most reliable)
-                run_cmd sudo cp "$SCRIPT_DIR/bin/linux-x86_64/starship" /usr/local/bin/starship
-                run_cmd sudo chmod +x /usr/local/bin/starship
-            else
-                # Download from GitHub releases (starship.rs installer may fail on some WSL setups)
-                info "Bundled binary not found, downloading from GitHub..."
-                local starship_arch
-                case "$(uname -m)" in
-                    x86_64)  starship_arch="x86_64" ;;
-                    aarch64) starship_arch="aarch64" ;;
-                    *) error "Unsupported arch for Starship: $(uname -m)" ;;
-                esac
-                local starship_tmp
-                starship_tmp="$(mktemp -d)"
-                if $DRY_RUN; then
-                    echo -e "${YELLOW}[DRY-RUN]${NC} Download starship from GitHub releases"
-                else
-                    curl -fsSL "https://github.com/starship/starship/releases/latest/download/starship-${starship_arch}-unknown-linux-musl.tar.gz" \
-                        | tar xz -C "$starship_tmp" \
-                        && sudo cp "$starship_tmp/starship" /usr/local/bin/starship \
-                        && sudo chmod +x /usr/local/bin/starship
-                    rm -rf "$starship_tmp"
-                fi
+            # Bundled binary is most reliable; otherwise download from GitHub
+            # releases (starship.rs installer may fail on some WSL setups)
+            if ! install_bundled_bin starship; then
+                info "No usable bundled binary for $ARCH, downloading from GitHub..."
+                install_release_tarball starship "https://github.com/starship/starship/releases/latest/download/starship-${ARCH}-unknown-linux-musl.tar.gz" \
+                    || error "Could not install Starship for $ARCH"
             fi
             ;;
     esac
@@ -734,36 +758,21 @@ else
             macos)
                 info "Installing Zellij..."
                 run_cmd brew install zellij
+                success "Zellij installed"
                 ;;
             debian|wsl)
                 info "Installing Zellij..."
-                if [[ -f "$SCRIPT_DIR/bin/linux-x86_64/zellij" ]]; then
-                    run_cmd sudo cp "$SCRIPT_DIR/bin/linux-x86_64/zellij" /usr/local/bin/zellij
-                    run_cmd sudo chmod +x /usr/local/bin/zellij
-                else
+                if ! install_bundled_bin zellij; then
                     # Download binary from GitHub releases (zellij.dev/launch auto-starts zellij, which hangs the script)
                     info "Downloading Zellij from GitHub releases..."
-                    local zellij_arch
-                    case "$(uname -m)" in
-                        x86_64)  zellij_arch="x86_64" ;;
-                        aarch64) zellij_arch="aarch64" ;;
-                        *) warn "Unsupported arch for Zellij: $(uname -m)"; return 0 ;;
-                    esac
-                    local zellij_url="https://github.com/zellij-org/zellij/releases/latest/download/zellij-${zellij_arch}-unknown-linux-musl.tar.gz"
-                    local zellij_tmp
-                    zellij_tmp="$(mktemp -d)"
-                    if $DRY_RUN; then
-                        echo -e "${YELLOW}[DRY-RUN]${NC} curl -fsSL $zellij_url | tar xz -C $zellij_tmp && sudo cp $zellij_tmp/zellij /usr/local/bin/"
+                    if install_release_tarball zellij "https://github.com/zellij-org/zellij/releases/latest/download/zellij-${ARCH}-unknown-linux-musl.tar.gz"; then
+                        success "Zellij installed"
                     else
-                        curl -fsSL "$zellij_url" | tar xz -C "$zellij_tmp" \
-                            && sudo cp "$zellij_tmp/zellij" /usr/local/bin/zellij \
-                            && sudo chmod +x /usr/local/bin/zellij
-                        rm -rf "$zellij_tmp"
+                        warn "Could not install Zellij for $ARCH — skipping"
                     fi
                 fi
                 ;;
         esac
-        success "Zellij installed"
     else
         info "Skipping Zellij"
     fi
@@ -957,7 +966,7 @@ else
 fi
 echo -e "${BOLD}══════════════════════════════════════════${NC}"
 echo ""
-echo -e "  ${BOLD}Platform:${NC} $OS"
+echo -e "  ${BOLD}Platform:${NC} $OS ($ARCH)"
 echo -e ""
 echo -e "  ${BOLD}Your terminal stack:${NC}"
 case "$OS" in
