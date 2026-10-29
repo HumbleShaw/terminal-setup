@@ -860,6 +860,16 @@ if [[ "$SHELL_CHOICE" == "fish" ]]; then
     fi
     success "Fish config deployed"
 
+    # Add ~/.local/bin to fish PATH on Linux — before the zoxide/fzf checks below,
+    # since the upstream zoxide installer and the bat/fd symlinks live there
+    if [[ "$OS" == "debian" || "$OS" == "wsl" ]]; then
+        if ! grep -qF '.local/bin' "$FISH_CONFIG_DIR/config.fish" 2>/dev/null; then
+            echo '' >> "$FISH_CONFIG_DIR/config.fish"
+            echo '# Local bin (Linux)' >> "$FISH_CONFIG_DIR/config.fish"
+            echo 'fish_add_path $HOME/.local/bin' >> "$FISH_CONFIG_DIR/config.fish"
+        fi
+    fi
+
     # Fish abbreviations (written to config.fish for Fish 3.x & 4.x compat)
     if ! grep -qF 'abbr -a ls' "$FISH_CONFIG_DIR/config.fish" 2>/dev/null; then
         info "Adding Fish abbreviations to config.fish..."
@@ -875,7 +885,9 @@ if status is-interactive
     abbr -a grep "rg"
     abbr -a top "btop"
     abbr -a lg "lazygit"
-    abbr -a cd "z"
+    if command -q zoxide
+        abbr -a cd "z"
+    end
 end
 ABBREOF
         success "Fish abbreviations added to config.fish"
@@ -889,10 +901,17 @@ ABBREOF
         cat >> "$FISH_CONFIG_DIR/config.fish" << 'FISHEOF'
 
 # zoxide
-zoxide init fish | source
+if command -q zoxide
+    zoxide init fish | source
+end
 
-# fzf
-fzf --fish | source
+# fzf — `fzf --fish` needs fzf 0.48+; older distro packages ship key-bindings.fish instead
+if command -q fzf; and fzf --fish >/dev/null 2>&1
+    fzf --fish | source
+else if test -f /usr/share/doc/fzf/examples/key-bindings.fish
+    source /usr/share/doc/fzf/examples/key-bindings.fish
+    fzf_key_bindings
+end
 set -gx FZF_DEFAULT_OPTS '--height 40% --layout=reverse --border'
 if command -q fd
     set -gx FZF_DEFAULT_COMMAND 'fd --type f --hidden --follow --exclude .git'
@@ -903,15 +922,6 @@ FISHEOF
         success "Zoxide + fzf init added"
     else
         success "Zoxide init already present"
-    fi
-
-    # Add ~/.local/bin to fish PATH on Linux
-    if [[ "$OS" == "debian" || "$OS" == "wsl" ]]; then
-        if ! grep -qF '.local/bin' "$FISH_CONFIG_DIR/config.fish" 2>/dev/null; then
-            echo '' >> "$FISH_CONFIG_DIR/config.fish"
-            echo '# Local bin (Linux)' >> "$FISH_CONFIG_DIR/config.fish"
-            echo 'fish_add_path $HOME/.local/bin' >> "$FISH_CONFIG_DIR/config.fish"
-        fi
     fi
 else
     # Zsh config

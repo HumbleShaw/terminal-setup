@@ -126,6 +126,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 
 ### Debian / Ubuntu
 - CLI 工具优先用 apt 安装，apt 没有的使用仓库内置二进制（delta、lazygit、eza、tldr、starship、zoxide）
+- apt 里的 fzf 低于 0.48（不支持 `fzf --fish` / `fzf --zsh`），Shell 配置会自动改用 `/usr/share/doc/fzf/examples/` 中自带的快捷键脚本
 - 内置二进制同时提供 **x86_64**（`bin/linux-x86_64/`）和 **aarch64 / arm64**（`bin/linux-aarch64/`）版本，适用于 NVIDIA Jetson Orin（JetPack 5/6）、Raspberry Pi OS 64 位、AWS Graviton 等
 - `bat` 在 Debian 上叫 `batcat`，`fd` 叫 `fdfind` — 脚本会自动创建软链接
 - 字体安装到 `~/.local/share/fonts/`
