@@ -910,7 +910,7 @@ ABBREOF
     fi
 
     # Zoxide + fzf init for fish
-    if ! grep -qF "zoxide" "$FISH_CONFIG_DIR/config.fish" 2>/dev/null; then
+    if ! grep -qF "zoxide init fish" "$FISH_CONFIG_DIR/config.fish" 2>/dev/null; then
         info "Adding zoxide + fzf init to fish config..."
         append_to_file "$FISH_CONFIG_DIR/config.fish" << 'FISHEOF'
 
