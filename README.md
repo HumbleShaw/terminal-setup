@@ -125,7 +125,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lewislulu/terminal-setup/mai
 - Ghostty installs as a native macOS app
 
 ### Debian / Ubuntu
-- CLI tools install via apt where available, GitHub releases for others (delta, lazygit, eza)
+- CLI tools install via apt where available, bundled binaries for others (delta, lazygit, eza, tldr, starship)
+- Bundled binaries are provided for **x86_64** (`bin/linux-x86_64/`) and **aarch64 / arm64** (`bin/linux-aarch64/`), e.g. NVIDIA Jetson Orin (JetPack 5/6), Raspberry Pi OS 64-bit, AWS Graviton
 - `bat` → `batcat`, `fd` → `fdfind` — symlinks are created automatically
 - Fonts install to `~/.local/share/fonts/`
 - Ghostty is not in apt — install manually via [snap, build from source](https://ghostty.org/docs/install), or use another terminal
