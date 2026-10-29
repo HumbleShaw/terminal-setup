@@ -153,7 +153,7 @@ CONFIGS_DIR="$SCRIPT_DIR/configs"
 if [[ ! -d "$CONFIGS_DIR" ]]; then
     info "Config files not found locally, cloning repo..."
     TMPDIR_CLONE="$(mktemp -d)"
-    git clone --depth 1 https://github.com/lewislulu/terminal-setup.git "$TMPDIR_CLONE/terminal-setup"
+    git clone --depth 1 https://github.com/HumbleShaw/terminal-setup.git "$TMPDIR_CLONE/terminal-setup"
     SCRIPT_DIR="$TMPDIR_CLONE/terminal-setup"
     CONFIGS_DIR="$SCRIPT_DIR/configs"
 fi
@@ -342,7 +342,6 @@ MESLO_FONTS=(
 )
 
 # Font source: bundled in repo (fonts/) — no download needed
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FONT_SRC_DIR="$SCRIPT_DIR/fonts"
 
 FONT_INSTALLED=true
