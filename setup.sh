@@ -521,10 +521,11 @@ install_fisher() {
         return 0
     fi
     info "Installing Fisher (Fish plugin manager)..."
-    if run_cmd fish -c 'curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher'; then
+    # </dev/null: `fisher install` reads piped stdin as extra plugin names
+    if run_cmd fish -c 'curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher' </dev/null; then
         success "Fisher installed"
     else
-        warn "Could not install Fisher — install manually: https://github.com/jorgebucaran/fisher"
+        warn "Could not install Fisher (network issue or GitHub API rate limit) — install manually: https://github.com/jorgebucaran/fisher"
     fi
 }
 
