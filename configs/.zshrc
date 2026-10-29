@@ -60,8 +60,12 @@ bindkey '^[[B' down-line-or-beginning-search
 # ─── fzf ─────────────────────────────────────────────────────────────
 if [[ -f ~/.fzf.zsh ]]; then
     source ~/.fzf.zsh
-elif command -v fzf &>/dev/null; then
-    eval "$(fzf --zsh 2>/dev/null)"
+elif command -v fzf &>/dev/null && fzf --zsh &>/dev/null; then
+    eval "$(fzf --zsh)"
+elif [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]]; then
+    # fzf < 0.48 (Debian/Ubuntu apt) has no `fzf --zsh`; use the packaged scripts
+    source /usr/share/doc/fzf/examples/key-bindings.zsh
+    [[ -f /usr/share/doc/fzf/examples/completion.zsh ]] && source /usr/share/doc/fzf/examples/completion.zsh
 fi
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 # Use fd for fzf if available
@@ -72,7 +76,9 @@ if command -v fd &>/dev/null; then
 fi
 
 # ─── Zoxide (smart cd) ──────────────────────────────────────────────
-eval "$(zoxide init zsh)"
+if command -v zoxide &>/dev/null; then
+    eval "$(zoxide init zsh)"
+fi
 
 # ─── fnm (Node version manager) ─────────────────────────────────────
 if command -v fnm &>/dev/null; then
