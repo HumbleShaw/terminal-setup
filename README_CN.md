@@ -80,6 +80,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 | **POSIX 兼容** | ❌ 自有语法 | ✅ 兼容 |
 | **自动补全建议** | ✅ 内置 | ✅ 通过插件 |
 | **语法高亮** | ✅ 内置 | ✅ 通过插件 |
+| **插件管理** | [Fisher](https://github.com/jorgebucaran/fisher)（`fisher install <owner>/<repo>`） | 无（Homebrew / apt） |
 | **Node 管理** | fnm（共享） | fnm（共享） |
 | **配置文件** | `~/.config/fish/config.fish` | `~/.zshrc` |
 | **适合** | 开箱即用，省心 | 写脚本，POSIX 兼容 |
@@ -90,6 +91,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 |------|------|
 | **[Ghostty](https://ghostty.org)** | GPU 加速终端模拟器 |
 | **Fish** 或 **Zsh** | Shell（你选） |
+| **[Fisher](https://github.com/jorgebucaran/fisher)** | Fish 插件管理器（仅 Fish） |
 | **[Starship](https://starship.rs)** | 跨 Shell 提示符（Catppuccin Mocha 主题） |
 | **MesloLGS NF** | Nerd Font，提供图标和 Powerline 字形 |
 | **[bat](https://github.com/sharkdp/bat)** | 带语法高亮和行号的 `cat` |
@@ -111,7 +113,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 1. 安装**包管理器**（macOS 用 Homebrew，Linux 用 apt）
 2. 安装 **Ghostty** 终端（macOS；Linux 需手动安装）
 3. 下载 **MesloLGS NF** Nerd 字体
-4. 安装你选择的 **Shell** + 插件
+4. 安装你选择的 **Shell** + 插件（选 Fish 时会装上 **Fisher** 插件管理器）
 5. 安装所有 **CLI 工具**（macOS 用 Homebrew，Linux 用 apt + GitHub releases）
 6. 安装 **Starship** 提示符 + Catppuccin Mocha 配置
 7. 安装 **fnm** + **Node.js** LTS（可选）
