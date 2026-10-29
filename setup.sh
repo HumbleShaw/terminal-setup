@@ -563,7 +563,8 @@ install_cli_tools_linux() {
         fi
     fi
 
-    # zoxide — not in apt on older Debian/Ubuntu, use bundled installer as fallback
+    # zoxide — not in apt on older Debian/Ubuntu: try snap, bundled binary,
+    # then the upstream installer (needs the GitHub API, which may be rate-limited)
     if has_cmd zoxide; then
         success "zoxide already installed"
     else
@@ -572,10 +573,13 @@ install_cli_tools_linux() {
             success "zoxide installed via apt"
         elif has_cmd snap && run_cmd sudo snap install zoxide 2>/dev/null; then
             success "zoxide installed via snap"
-        else
-            info "zoxide not in apt/snap, using bundled installer..."
-            run_cmd bash "$SCRIPT_DIR/scripts/install-zoxide.sh"
-            success "zoxide installed via bundled script"
+        elif ! install_bundled_bin zoxide; then
+            info "zoxide not in apt/snap and no bundled binary for $ARCH, using upstream installer..."
+            if run_cmd bash "$SCRIPT_DIR/scripts/install-zoxide.sh"; then
+                success "zoxide installed via upstream installer"
+            else
+                warn "Could not install zoxide — skipping (install manually: https://github.com/ajeetdsouza/zoxide#installation)"
+            fi
         fi
     fi
 

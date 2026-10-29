@@ -125,7 +125,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 - Ghostty installs as a native macOS app
 
 ### Debian / Ubuntu
-- CLI tools install via apt where available, bundled binaries for others (delta, lazygit, eza, tldr, starship)
+- CLI tools install via apt where available, bundled binaries for others (delta, lazygit, eza, tldr, starship, zoxide)
 - Bundled binaries are provided for **x86_64** (`bin/linux-x86_64/`) and **aarch64 / arm64** (`bin/linux-aarch64/`), e.g. NVIDIA Jetson Orin (JetPack 5/6), Raspberry Pi OS 64-bit, AWS Graviton
 - `bat` → `batcat`, `fd` → `fdfind` — symlinks are created automatically
 - Fonts install to `~/.local/share/fonts/`

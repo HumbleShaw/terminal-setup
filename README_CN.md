@@ -125,7 +125,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 - Ghostty 作为原生 macOS 应用安装
 
 ### Debian / Ubuntu
-- CLI 工具优先用 apt 安装，apt 没有的使用仓库内置二进制（delta、lazygit、eza、tldr、starship）
+- CLI 工具优先用 apt 安装，apt 没有的使用仓库内置二进制（delta、lazygit、eza、tldr、starship、zoxide）
 - 内置二进制同时提供 **x86_64**（`bin/linux-x86_64/`）和 **aarch64 / arm64**（`bin/linux-aarch64/`）版本，适用于 NVIDIA Jetson Orin（JetPack 5/6）、Raspberry Pi OS 64 位、AWS Graviton 等
 - `bat` 在 Debian 上叫 `batcat`，`fd` 叫 `fdfind` — 脚本会自动创建软链接
 - 字体安装到 `~/.local/share/fonts/`
