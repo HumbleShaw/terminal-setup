@@ -80,6 +80,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 | **POSIX** | ❌ Own syntax | ✅ Compatible |
 | **Autosuggestions** | ✅ Built-in | ✅ via plugin |
 | **Syntax Highlighting** | ✅ Built-in | ✅ via plugin |
+| **Plugin Manager** | [Fisher](https://github.com/jorgebucaran/fisher) (`fisher install <owner>/<repo>`) | None (Homebrew / apt) |
 | **Node Manager** | fnm (shared) | fnm (shared) |
 | **Config** | `~/.config/fish/config.fish` | `~/.zshrc` |
 | **Best for** | Clean defaults, no fuss | Scripting, POSIX compat |
@@ -90,6 +91,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 |-----------|------|
 | **[Ghostty](https://ghostty.org)** | GPU-accelerated terminal emulator |
 | **Fish** or **Zsh** | Shell (your choice) |
+| **[Fisher](https://github.com/jorgebucaran/fisher)** | Fish plugin manager (Fish only) |
 | **[Starship](https://starship.rs)** | Cross-shell prompt (Catppuccin Mocha theme) |
 | **MesloLGS NF** | Nerd Font for icons & powerline glyphs |
 | **[bat](https://github.com/sharkdp/bat)** | `cat` with syntax highlighting & line numbers |
@@ -111,7 +113,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/HumbleShaw/terminal-setup/ma
 1. Installs **package manager** (Homebrew on macOS, apt on Linux)
 2. Installs **Ghostty** terminal (macOS; Linux users install separately)
 3. Downloads **MesloLGS NF** nerd fonts
-4. Installs your **shell** of choice + plugins
+4. Installs your **shell** of choice + plugins (Fish gets the **Fisher** plugin manager)
 5. Installs all **CLI tools** (Homebrew on macOS, apt + GitHub releases on Linux)
 6. Installs **Starship** prompt with Catppuccin Mocha config
 7. Installs **fnm** + **Node.js** LTS (optional)

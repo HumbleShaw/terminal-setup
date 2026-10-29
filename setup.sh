@@ -4,7 +4,7 @@
 #
 # Platforms: macOS, Debian/Ubuntu, Windows (via WSL)
 #
-# Stack: Ghostty + (Fish or Zsh) + Starship + Nerd Font (MesloLGS)
+# Stack: Ghostty + (Fish + Fisher, or Zsh) + Starship + Nerd Font (MesloLGS)
 # Tools: bat, eza, fd, ripgrep, btop, zoxide, jq, tldr, delta, lazygit, fzf
 # Node:  fnm (Fast Node Manager) — works with both Fish and Zsh
 # Theme: Catppuccin Mocha (Starship)
@@ -374,7 +374,7 @@ fi
 echo ""
 echo -e "${BOLD}══════════════════════════════════════════${NC}"
 if [[ "$SHELL_CHOICE" == "fish" ]]; then
-    echo -e "${BOLD}  🐟 Step 4/9: Fish Shell${NC}"
+    echo -e "${BOLD}  🐟 Step 4/9: Fish Shell + Fisher${NC}"
 else
     echo -e "${BOLD}  🐚 Step 4/9: Zsh + Fish-like Plugins${NC}"
 fi
@@ -513,6 +513,25 @@ case "$OS" in
     macos)  install_shell_macos ;;
     debian|wsl) install_shell_linux ;;
 esac
+
+# Fisher (Fish plugin manager) — official installer, so `fisher update` also updates Fisher itself
+install_fisher() {
+    if fish -c 'type -q fisher' &>/dev/null; then
+        success "Fisher already installed"
+        return 0
+    fi
+    info "Installing Fisher (Fish plugin manager)..."
+    # </dev/null: `fisher install` reads piped stdin as extra plugin names
+    if run_cmd fish -c 'curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher' </dev/null; then
+        success "Fisher installed"
+    else
+        warn "Could not install Fisher (network issue or GitHub API rate limit) — install manually: https://github.com/jorgebucaran/fisher"
+    fi
+}
+
+if [[ "$SHELL_CHOICE" == "fish" ]]; then
+    install_fisher
+fi
 
 # ─── Step 5: CLI Tools ──────────────────────────────────────────────
 echo ""
@@ -981,6 +1000,7 @@ case "$OS" in
 esac
 if [[ "$SHELL_CHOICE" == "fish" ]]; then
     echo -e "    🐟 Fish                 — shell"
+    echo -e "    🎣 Fisher               — fish plugin manager"
 else
     echo -e "    🐚 Zsh                  — shell (POSIX-compatible)"
     echo -e "    ✨ zsh-autosuggestions   — fish-like suggestions"
